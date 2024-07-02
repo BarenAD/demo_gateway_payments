@@ -17,11 +17,13 @@ return new class extends Migration
             $table->dateTime('datetime');
             $table->unsignedBigInteger('user_from_id');
             $table->unsignedBigInteger('user_to_id');
-            $table->unsignedBigInteger('currency_id');
+            $table->unsignedBigInteger('currency_from_id');
+            $table->unsignedBigInteger('currency_to_id');
             $table->unsignedBigInteger('status_id');
             $table->foreign('user_from_id')->references('id')->on('users')->cascadeOnDelete();
             $table->foreign('user_to_id')->references('id')->on('users')->cascadeOnDelete();
-            $table->foreign('currency_id')->references('id')->on('currencies')->cascadeOnDelete();
+            $table->foreign('currency_from_id')->references('id')->on('currencies')->cascadeOnDelete();
+            $table->foreign('currency_to_id')->references('id')->on('currencies')->cascadeOnDelete();
             $table->foreign('status_id')->references('id')->on('transaction_statuses')->cascadeOnDelete();
             $table->timestamps();
 

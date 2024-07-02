@@ -16,7 +16,8 @@ class Transaction extends Model
         'datetime',
         'user_from_id',
         'user_to_id',
-        'currency_id',
+        'currency_from_id',
+        'currency_to_id',
         'status_id',
     ];
 }

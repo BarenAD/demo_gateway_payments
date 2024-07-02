@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('user_balances', function (Blueprint $table) {
             $table->id();
             $table->decimal('value', 9,3);
+            $table->dateTime('last_synchronize');
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('currency_id');
             $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();

@@ -15,5 +15,6 @@ class UserBalance extends Model
         'value',
         'user_id',
         'currency_id',
+        'last_synchronize',
     ];
 }
