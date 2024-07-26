@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Currency extends ModelTranslations
 {
@@ -20,4 +20,14 @@ class Currency extends ModelTranslations
         'identify',
         'name',
     ];
+
+    public function to_rates(): HasMany
+    {
+        return $this->hasMany(CurrencyRate::class, 'currency_from_id');
+    }
+
+    public function from_rates(): HasMany
+    {
+        return $this->hasMany(CurrencyRate::class, 'currency_to_id');
+    }
 }

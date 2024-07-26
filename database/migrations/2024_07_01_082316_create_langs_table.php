@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\Langs;
+use App\Models\Lang;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -17,6 +19,8 @@ return new class extends Migration
             $table->string('name');
             $table->timestamps();
         });
+        Lang::query()->updateOrCreate(['id' => Langs::en->value], ['identify' => Langs::en->name, 'name' => 'English']);
+        Lang::query()->updateOrCreate(['id' => Langs::ru->value], ['identify' => Langs::ru->name, 'name' => 'Русский']);
     }
 
     /**
