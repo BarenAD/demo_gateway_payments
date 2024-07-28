@@ -35,21 +35,24 @@ class TransactionService
             $value,
             $datetime
         ) {
-            $currencyRate = CurrencyRate::query()
-                ->where('currency_from_id', $currencyFromId)
-                ->where('currency_to_id', $currencyToId)
-                ->firstOrFail();
+            $currencyRate =
+                $currencyFromId === $currencyToId ? 1 :
+                    CurrencyRate::query()
+                    ->where('currency_from_id', $currencyFromId)
+                    ->where('currency_to_id', $currencyToId)
+                    ->firstOrFail()
+                    ->value;
 
             return Transaction::query()
                 ->create([
                     'value_from' => $value,
-                    'value_to' => $currencyRate->value * $value,
+                    'value_to' => $currencyRate * $value,
                     'datetime' => $datetime ?? now(),
                     'user_from_id' => $userFromId,
                     'user_to_id' => $userToId,
                     'currency_from_id' => $currencyFromId,
                     'currency_to_id' => $currencyToId,
-                    'status_id' => empty($datetime) ? TransactionStatues::SUCCESSFULLY : TransactionStatues::NEW,
+                    'status_id' => TransactionStatues::NEW,
                     'type_id' => TransactionTypes::TRANSFER,
                 ]);
         });
@@ -61,7 +64,7 @@ class TransactionService
                 'value_to' => $value,
                 'datetime' => now(),
                 'type_id' => TransactionTypes::DEPOSIT,
-                'status_id' => TransactionStatues::SUCCESSFULLY,
+                'status_id' => TransactionStatues::NEW,
                 'user_to_id' => $userId,
                 'currency_to_id' => $currencyId,
             ]);
@@ -79,7 +82,7 @@ class TransactionService
                     'value_from' => $value,
                     'datetime' => now(),
                     'type_id' => TransactionTypes::OUTPUT,
-                    'status_id' => TransactionStatues::SUCCESSFULLY,
+                    'status_id' => TransactionStatues::NEW,
                     'user_from_id' => $userId,
                     'currency_from_id' => $currencyId,
                 ]);
@@ -151,12 +154,14 @@ class TransactionService
             }
         });
 
-        $this->updateUserBalance(
-            $userId,
-            $currencyId,
-            $result,
-            $lastConsiderTransactionDatetime
-        );
+        if (!empty($lastConsiderTransactionDatetime)) {
+            $this->updateUserBalance(
+                $userId,
+                $currencyId,
+                $result,
+                $lastConsiderTransactionDatetime
+            );
+        }
         return $result;
     }
 

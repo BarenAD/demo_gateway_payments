@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('user_balances', function (Blueprint $table) {
             $table->id();
-            $table->decimal('value', 9,3);
+            $table->decimal('value', 30,19);
             $table->dateTime('last_synchronize');
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('currency_id');

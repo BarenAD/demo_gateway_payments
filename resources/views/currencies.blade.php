@@ -1,3 +1,10 @@
+<form
+    action="{{ route('currencies.sync') }}"
+    method="POST"
+>
+    {{ csrf_field() }}
+    <button type="submit">SYNC</button>
+</form>
 <table id="currencies">
     <thead>
         <tr>
@@ -11,13 +18,6 @@
             @endforeach
         </tr>
     </thead>
-    <form
-        action="{{ route('currencies.sync') }}"
-        method="POST"
-    >
-        {{ csrf_field() }}
-        <button type="submit">SYNC</button>
-    </form>
     <tbody>
         @foreach($currencies as $currency)
             <tr>

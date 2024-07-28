@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('currency_rates', function (Blueprint $table) {
             $table->id();
-            $table->decimal('value', 25,19);
+            $table->decimal('value', 30,19);
             $table->unsignedBigInteger('currency_from_id');
             $table->unsignedBigInteger('currency_to_id');
             $table->foreign('currency_from_id')->references('id')->on('currencies')->cascadeOnDelete();

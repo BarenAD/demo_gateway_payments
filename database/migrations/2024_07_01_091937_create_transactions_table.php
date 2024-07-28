@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
-            $table->decimal('value_from', 25,19)->nullable();
-            $table->decimal('value_to', 25,19)->nullable();
+            $table->decimal('value_from', 30,19)->nullable();
+            $table->decimal('value_to', 30,19)->nullable();
             $table->dateTime('datetime');
             $table->unsignedBigInteger('user_from_id')->nullable();
             $table->unsignedBigInteger('user_to_id')->nullable();
