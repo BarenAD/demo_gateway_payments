@@ -19,6 +19,7 @@ return new class extends Migration
             $table->unsignedBigInteger('currency_id');
             $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
             $table->foreign('currency_id')->references('id')->on('currencies')->cascadeOnDelete();
+            $table->unique(['user_id', 'currency_id']);
             $table->timestamps();
         });
     }

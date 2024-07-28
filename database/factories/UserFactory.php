@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Lang;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -23,12 +24,16 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
+        $sex = (bool)rand(0,1);
         return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
+            'last_name' => fake('ru_RU')->lastName($sex ? 'male' : 'female'),
+            'first_name' => fake('ru_RU')->firstName($sex ? 'male' : 'female'),
+            'birthdate' => fake()->dateTimeBetween('-40 years', '-10 years')->format('Y-m-d'),
+            'sex' => $sex,
+            'email' => fake()->unique()->email(),
+            'lang_id' => Lang::query()->inRandomOrder()->first()->id,
+            'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
+            'remember_token' => Hash::make(Str::uuid()),
         ];
     }
 

@@ -12,7 +12,8 @@ class Transaction extends Model
     protected $table = 'transactions';
 
     protected $fillable = [
-        'value',
+        'value_from',
+        'value_to',
         'datetime',
         'user_from_id',
         'user_to_id',

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Langs;
 use App\Models\Currency;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -24,8 +25,9 @@ return new class extends Migration
         });
         Currency::query()->create([
             'identify' => config('app.main_currency_identify'),
-            'name' => Lang::get("currencies." . config('app.main_currency_identify')),
-        ]);
+            'name' => 'Российский рубль',
+        ])
+            ->addTranslation(['name' => 'Russian Ruble'], Langs::en->value);
     }
 
     /**
