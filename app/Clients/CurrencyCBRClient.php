@@ -1,14 +1,14 @@
 <?php
 
 
-namespace App\Clients\Currencies;
+namespace App\Clients;
 
 
 use App\DTO\CurrencyDTO;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 
-class CurrencyCBRClient extends CurrencyClient
+class CurrencyCBRClient
 {
     private readonly string $url;
     private readonly Client $client;

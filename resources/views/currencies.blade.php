@@ -6,17 +6,24 @@
             </th>
             @foreach($currencies as $currency)
                 <th title="{{ $currency->name }}">
-                    {{ $currency->identify }}
+                    {{ $currency->identify }} | X -> Y(1)
                 </th>
             @endforeach
         </tr>
     </thead>
+    <form
+        action="{{ route('currencies.sync') }}"
+        method="POST"
+    >
+        {{ csrf_field() }}
+        <button type="submit">SYNC</button>
+    </form>
     <tbody>
         @foreach($currencies as $currency)
             <tr>
-                <td title=" {{ $currency->name }}">
-                    {{ $currency->identify }}
-                </td>
+                <th title=" {{ $currency->name }}" style="white-space: nowrap">
+                    {{ $currency->identify }} | Y(1) -> X
+                </th>
                 @foreach($currencies as $currencyRate)
                     @if($currencyRate->identify === $currency->identify)
                         <td title=" {{ $currencyRate->name }}">

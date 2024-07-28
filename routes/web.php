@@ -7,6 +7,5 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/currencies', [CurrencyController::class, 'index']);
-Route::post('/currencies/sync', [CurrencyController::class, 'synchronizeCurrencies']);
-Route::post('/currencies/calculate-rates', [CurrencyController::class, 'calculateRatesByMainCurrency']);
+Route::get('/currencies', [CurrencyController::class, 'index'])->name('currencies.index');
+Route::post('/currencies', [CurrencyController::class, 'synchronizeCurrencies'])->name('currencies.sync');

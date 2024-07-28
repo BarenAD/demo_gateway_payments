@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Clients\Currencies\CurrencyCBRClient;
+use App\Clients\CurrencyCBRClient;
 use App\Models\Currency;
 use App\Services\CurrencyService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Lang;
 
 class CurrencyController extends Controller
 {
@@ -23,14 +22,10 @@ class CurrencyController extends Controller
         CurrencyCBRClient $client,
         CurrencyService $service
     ) {
-        $service->synchronizeCurrencies($client);
-    }
-
-    public function calculateRatesByMainCurrency(
-        Request $request,
-        CurrencyCBRClient $client,
-        CurrencyService $service
-    ) {
+        $service->synchronizeCurrencies(
+            $client->getCurrencies(now())
+        );
         $service->calculateRatesByMainCurrency();
+        return redirect(route('currencies.index'));
     }
 }
