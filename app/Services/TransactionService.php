@@ -6,15 +6,17 @@ use App\Enums\Transactions\TransactionStatues;
 use App\Enums\Transactions\TransactionTypes;
 use App\Models\CurrencyRate;
 use App\Models\Transaction;
-use App\Models\UserBalance;
+use App\Services\Balances\BalanceService;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class TransactionService
 {
+    public function __construct(
+        private readonly BalanceService $balanceService
+    ){}
+
     public function transfer(
         int     $userFromId,
         int     $userToId,
@@ -23,7 +25,7 @@ class TransactionService
         float   $value,
         ?Carbon $datetime = null
     ): Model {
-        $balance = $this->getUserBalance($userFromId, $currencyFromId);
+        $balance = $this->balanceService->getUserBalance($userFromId, $currencyFromId);
         if ($balance < $value) {
             throw new \Error('Insufficient funds');
         }
@@ -64,7 +66,7 @@ class TransactionService
                 'value_to' => $value,
                 'datetime' => now(),
                 'type_id' => TransactionTypes::DEPOSIT,
-                'status_id' => TransactionStatues::NEW,
+                'status_id' => TransactionStatues::SUCCESSFULLY,
                 'user_to_id' => $userId,
                 'currency_to_id' => $currencyId,
             ]);
@@ -72,7 +74,7 @@ class TransactionService
 
     public function output(int $userId, int $currencyId, float $value): Model
     {
-        $balance = $this->getUserBalance($userId, $currencyId);
+        $balance = $this->balanceService->getUserBalance($userId, $currencyId);
         if ($balance < $value) {
             throw new \Error('Insufficient funds');
         }
@@ -82,106 +84,10 @@ class TransactionService
                     'value_from' => $value,
                     'datetime' => now(),
                     'type_id' => TransactionTypes::OUTPUT,
-                    'status_id' => TransactionStatues::NEW,
+                    'status_id' => TransactionStatues::SUCCESSFULLY,
                     'user_from_id' => $userId,
                     'currency_from_id' => $currencyId,
                 ]);
         });
-    }
-    public function getUserBalance(int $userId, int $currencyId): float
-    {
-        $result = 0.0;
-        $balance = UserBalance::query()
-            ->where('user_id', $userId)
-            ->where('currency_id', $currencyId)
-            ->first();
-        $query = Transaction::query()
-            ->where(function (Builder $query) use ($userId) {
-                $query->where('user_from_id', $userId);
-                $query->orWhere('user_to_id', $userId);
-            })
-            ->where(function (Builder $query) use ($currencyId) {
-                $query->where('currency_from_id', $currencyId);
-                $query->orWhere('currency_to_id', $currencyId);
-            })
-            ->whereIn('status_id', [
-                TransactionStatues::SUCCESSFULLY,
-                TransactionStatues::IN_QUEUE,
-                TransactionStatues::NEW,
-                TransactionStatues::IN_PROGRESS,
-            ])
-            ->orderBy('datetime');
-        if (!empty($balance)) {
-            $query->where('datetime', '>', $balance->last_synchronize);
-            $result = $balance->value;
-        }
-
-        $lastConsiderTransactionDatetime = null;
-        $query->chunk(500, function (Collection $transactions) use (
-            &$result,
-            &$lastConsiderTransactionDatetime,
-            $userId,
-            $currencyId
-        ) {
-            foreach ($transactions as $transaction) {
-                switch ($transaction->type_id) {
-                    case TransactionTypes::TRANSFER:
-                        if (
-                            $transaction->user_from_id === $userId &&
-                            $transaction->currency_from_id === $currencyId
-                        ) {
-                            $result -= $transaction->value_from;
-                        } else if (
-                            $transaction->user_to_id === $userId &&
-                            $transaction->currency_to_id === $currencyId &&
-                            $transaction->status_id === TransactionStatues::SUCCESSFULLY
-                        ) {
-                            $result += $transaction->value_to;
-                        }
-                        break;
-                    case TransactionTypes::DEPOSIT:
-                        $result += $transaction->value_to;
-                        break;
-                    case TransactionTypes::OUTPUT:
-                        $result -= $transaction->value_from;
-                        break;
-                    default:
-                        throw new \Error('Unknown transaction type!');
-                }
-                if ($transaction->status_id === TransactionStatues::SUCCESSFULLY) {
-                    $lastConsiderTransactionDatetime = $transaction->datetime;
-                }
-            }
-        });
-
-        if (!empty($lastConsiderTransactionDatetime)) {
-            $this->updateUserBalance(
-                $userId,
-                $currencyId,
-                $result,
-                $lastConsiderTransactionDatetime
-            );
-        }
-        return $result;
-    }
-
-    private function updateUserBalance(
-        int $userId,
-        int $currencyId,
-        float $value,
-        Carbon $lastConsiderTransactionDatetime
-    ): void {
-        $params = [
-            'user_id' => $userId,
-            'currency_id' => $currencyId,
-        ];
-        UserBalance::query()->updateOrCreate(
-            $params,
-            [
-                ...$params,
-                'value' => $value,
-                'last_synchronize' => $lastConsiderTransactionDatetime,
-            ]
-        );
     }
 }
