@@ -9,7 +9,6 @@ use App\Models\Transaction;
 use App\Services\Balances\BalanceService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
 
 class TransactionService
 {
@@ -26,38 +25,35 @@ class TransactionService
         ?Carbon $datetime = null
     ): Model {
         $balance = $this->balanceService->getUserBalance($userFromId, $currencyFromId);
-        if ($balance < $value) {
+        $transactionStatus = $balance < $value ? TransactionStatues::ERROR : TransactionStatues::NEW;
+        $oneToOneRate = 1;
+        $currencyRate = $currencyFromId === $currencyToId ?
+            $oneToOneRate
+            :
+            CurrencyRate::query()
+            ->where('currency_from_id', $currencyFromId)
+            ->where('currency_to_id', $currencyToId)
+            ->firstOrFail()
+            ->value;
+
+        $result = Transaction::query()
+            ->create([
+                'value_from' => $value,
+                'value_to' => $currencyRate * $value,
+                'datetime' => $datetime ?? now(),
+                'datetime_completed' => $transactionStatus === TransactionStatues::ERROR ? now() : null,
+                'user_from_id' => $userFromId,
+                'user_to_id' => $userToId,
+                'currency_from_id' => $currencyFromId,
+                'currency_to_id' => $currencyToId,
+                'status_id' => $transactionStatus,
+                'type_id' => TransactionTypes::TRANSFER,
+            ]);
+
+        if ($transactionStatus === TransactionStatues::ERROR) {
             throw new \Error('Insufficient funds');
         }
-        return DB::transaction(function () use (
-            $userFromId,
-            $userToId,
-            $currencyFromId,
-            $currencyToId,
-            $value,
-            $datetime
-        ) {
-            $currencyRate =
-                $currencyFromId === $currencyToId ? 1 :
-                    CurrencyRate::query()
-                    ->where('currency_from_id', $currencyFromId)
-                    ->where('currency_to_id', $currencyToId)
-                    ->firstOrFail()
-                    ->value;
-
-            return Transaction::query()
-                ->create([
-                    'value_from' => $value,
-                    'value_to' => $currencyRate * $value,
-                    'datetime' => $datetime ?? now(),
-                    'user_from_id' => $userFromId,
-                    'user_to_id' => $userToId,
-                    'currency_from_id' => $currencyFromId,
-                    'currency_to_id' => $currencyToId,
-                    'status_id' => TransactionStatues::NEW,
-                    'type_id' => TransactionTypes::TRANSFER,
-                ]);
-        });
+        return $result;
     }
     public function deposit(int $userId, int $currencyId, float $value): Model
     {
@@ -65,6 +61,7 @@ class TransactionService
             ->create([
                 'value_to' => $value,
                 'datetime' => now(),
+                'datetime_completed' => now(),
                 'type_id' => TransactionTypes::DEPOSIT,
                 'status_id' => TransactionStatues::SUCCESSFULLY,
                 'user_to_id' => $userId,
@@ -75,19 +72,20 @@ class TransactionService
     public function output(int $userId, int $currencyId, float $value): Model
     {
         $balance = $this->balanceService->getUserBalance($userId, $currencyId);
-        if ($balance < $value) {
+        $statusTransaction = $balance < $value ? TransactionStatues::ERROR : TransactionStatues::SUCCESSFULLY;
+        $result = Transaction::query()
+            ->create([
+                'value_from' => $value,
+                'datetime' => now(),
+                'datetime_completed' => now(),
+                'type_id' => TransactionTypes::OUTPUT,
+                'status_id' => $statusTransaction,
+                'user_from_id' => $userId,
+                'currency_from_id' => $currencyId,
+            ]);
+        if ($statusTransaction === TransactionStatues::ERROR) {
             throw new \Error('Insufficient funds');
         }
-        return DB::transaction(function () use ($userId, $currencyId, $value, $balance) {
-            return Transaction::query()
-                ->create([
-                    'value_from' => $value,
-                    'datetime' => now(),
-                    'type_id' => TransactionTypes::OUTPUT,
-                    'status_id' => TransactionStatues::SUCCESSFULLY,
-                    'user_from_id' => $userId,
-                    'currency_from_id' => $currencyId,
-                ]);
-        });
+        return $result;
     }
 }

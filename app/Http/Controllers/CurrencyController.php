@@ -22,6 +22,10 @@ class CurrencyController extends Controller
         CurrencyCBRClient $client,
         CurrencyService $service
     ) {
+        /*
+         * Ввиду того, что клиент всего 1 и не планируется пока добавлять другие - тут жестко завязан клиент.
+         * В дальнейшем можно расширить роут, указав тип синхронизации, разделив это на различные клиенты.
+         */
         $service->synchronizeCurrencies(
             $client->getCurrencies(now())
         );

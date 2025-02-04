@@ -16,6 +16,7 @@ return new class extends Migration
             $table->decimal('value_from', 30,19)->nullable();
             $table->decimal('value_to', 30,19)->nullable();
             $table->dateTime('datetime');
+            $table->dateTime('datetime_completed')->nullable();
             $table->unsignedBigInteger('user_from_id')->nullable();
             $table->unsignedBigInteger('user_to_id')->nullable();
             $table->unsignedBigInteger('currency_from_id')->nullable();

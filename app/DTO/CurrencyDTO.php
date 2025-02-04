@@ -4,6 +4,7 @@ namespace App\DTO;
 
 use Spatie\DataTransferObject\DataTransferObject;
 
+// Immutable object
 class CurrencyDTO extends DataTransferObject
 {
     public readonly string $name;

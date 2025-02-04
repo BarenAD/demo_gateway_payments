@@ -40,18 +40,30 @@ class BalanceService
             $result = $balance->value;
         }
 
-        $lastConsiderTransactionDatetime = null;
+        $hasUncompletedTransaction = false;
+        $lastConsiderTransaction = null;
         $query->chunk(500, function (Collection $transactions) use (
             &$result,
-            &$lastConsiderTransactionDatetime,
+            &$lastConsiderTransaction,
+            &$hasUncompletedTransaction,
             $userId,
             $currencyId
         ) {
             foreach ($transactions as $transaction) {
                 $handleAction = UserBalanceCalculateHandle::make($transaction->type_id);
                 $result += $handleAction->handle($transaction, $userId, $currencyId);
-                if ($transaction->status_id === TransactionStatues::SUCCESSFULLY) {
-                    $lastConsiderTransactionDatetime = $transaction->datetime;
+                $transactionCompleted = in_array($transaction->status_id, [
+                    TransactionStatues::SUCCESSFULLY,
+                    TransactionStatues::ERROR,
+                ]);
+                if (!$hasUncompletedTransaction && !$transactionCompleted) {
+                    $hasUncompletedTransaction = true;
+                }
+                if (!$hasUncompletedTransaction && $transactionCompleted) {
+                    $lastConsiderTransaction = [
+                        'result' => $result,
+                        'datetime' => $transaction->datetime,
+                    ];
                 }
             }
         });
@@ -60,8 +72,8 @@ class BalanceService
             $this->updateUserBalance(
                 $userId,
                 $currencyId,
-                $result,
-                $lastConsiderTransactionDatetime
+                $lastConsiderTransaction['result'],
+                $lastConsiderTransaction['datetime']
             );
         }
         return $result;
@@ -73,14 +85,12 @@ class BalanceService
         float $value,
         Carbon $lastConsiderTransactionDatetime
     ): void {
-        $params = [
-            'user_id' => $userId,
-            'currency_id' => $currencyId,
-        ];
         UserBalance::query()->updateOrCreate(
-            $params,
             [
-                ...$params,
+                'user_id' => $userId,
+                'currency_id' => $currencyId,
+            ],
+            [
                 'value' => $value,
                 'last_synchronize' => $lastConsiderTransactionDatetime,
             ]

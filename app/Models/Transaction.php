@@ -17,6 +17,7 @@ class Transaction extends Model
         'value_from',
         'value_to',
         'datetime',
+        'datetime_completed',
         'user_from_id',
         'user_to_id',
         'currency_from_id',
@@ -29,5 +30,6 @@ class Transaction extends Model
         'type_id' => TransactionTypes::class,
         'status_id' => TransactionStatues::class,
         'datetime' => 'datetime',
+        'datetime_completed' => 'datetime',
     ];
 }
